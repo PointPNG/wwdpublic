@@ -1,8 +1,13 @@
 using System.Numerics;
+using System.Collections.Generic;
 using Content.Shared.Construction.EntitySystems;
+using Content.Shared.Damage;
+using Content.Shared.Damage.Prototypes;
 using Content.Shared.Maps;
 using Content.Shared.Weapons.Melee.Events;
 using Robust.Shared.Physics;
+using Robust.Shared.Physics.Components;
+using Robust.Shared.Physics.Systems;
 
 namespace Content.Server.VendingMachines;
 
@@ -11,6 +16,10 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly AnchorableSystem _anchorable = default!;
+    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly DamageableSystem _damageable = default!;
+    [Dependency] private readonly EntityLookupSystem _lookup = default!;
+    [Dependency] private readonly SharedPhysicsSystem _physics = default!;
 
     public override void Initialize()
     {
@@ -28,23 +37,45 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
         if (!TryComp(gridUid, out MapGridComponent grid))
             return;
 
-        var userPos = _transform.GetMapCoordinates(args.User).Position;
-        var hitPos = _transform.GetMapCoordinates(uid).Position;
-        var dir = hitPos - userPos;
-        if (dir == Vector2.Zero)
+        var indices = grid.TileIndicesFor(xform.Coordinates);
+
+        var candidates = new List<Vector2i>(4);
+        var offsets = new[]
+        {
+            new Vector2i(0, 1),
+            new Vector2i(0, -1),
+            new Vector2i(1, 0),
+            new Vector2i(-1, 0)
+        };
+
+        foreach (var off in offsets)
+        {
+            var tile = indices + off;
+            if (_anchorable.TileFree(grid, tile))
+                candidates.Add(off);
+        }
+
+        if (candidates.Count == 0)
             return;
 
-        var angle = Angle.FromWorldVec(dir);
-        var offset = angle.GetCardinalDir().ToIntVec();
-        var indices = grid.TileIndicesFor(xform.Coordinates) + offset;
+        var offset = _random.Pick(candidates);
+        var angle = Angle.FromWorldVec(new Vector2(offset.X, offset.Y));
+        var destIndices = indices + offset;
 
-        if (!_anchorable.TileFree(grid, indices))
-            return;
-
-        var coords = grid.GridTileToLocal(indices);
+        var coords = grid.GridTileToLocal(destIndices);
         _transform.Unanchor(uid, xform);
         _transform.SetCoordinates(uid, coords);
         _transform.SetWorldRotation(uid, angle + Angle.FromDegrees(90));
         _transform.AnchorEntity(uid, xform);
+
+        var bounds = _lookup.GetWorldAABB(uid);
+        foreach (var body in _physics.GetCollidingEntities(xform.MapID, bounds))
+        {
+            if (body.BodyType == BodyType.Static || body.Owner == uid || !body.Hard)
+                continue;
+
+            var blunt = _prototype.Index<DamageTypePrototype>("Blunt");
+            _damageable.TryChangeDamage(body.Owner, new DamageSpecifier(blunt, 100), origin: uid);
+        }
     }
 }
