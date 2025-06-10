@@ -7,8 +7,18 @@ namespace Content.Server.VendingMachines;
 public sealed partial class TipOnMeleeHitComponent : Component
 {
     /// <summary>
-    /// Probability of tipping when hit.
+    ///     Base probability of tipping when hit.
     /// </summary>
-    [DataField("chance")]
-    public float Chance = 0.25f;
+    [DataField("baseChance")] public float BaseChance = 0.05f;
+
+    /// <summary>
+    ///     Additional chance added after every failed hit.
+    /// </summary>
+    [DataField("increment")] public float Increment = 0.05f;
+
+    /// <summary>
+    ///     Current tipping chance. Increases with each hit until the machine falls over.
+    /// </summary>
+    [ViewVariables]
+    public float CurrentChance;
 }

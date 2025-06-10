@@ -1330,7 +1330,8 @@
     pack: GenericVendGoodbyes
   - type: Speech
   - type: TipOnMeleeHit
-    chance: 0.25
+    baseChance: 0.05
+    increment: 0.05
   - type: Sprite
     noRot: false
     sprite: Structures/Machines/VendingMachines/vendomat.rsi

@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using System.Collections.Generic;
 using Content.Shared.Construction.EntitySystems;
@@ -5,6 +6,11 @@ using Content.Shared.Damage;
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.Maps;
 using Content.Shared.Weapons.Melee.Events;
+using Content.Shared.Mind.Components;
+using Content.Server.Advertise;
+using Content.Server.Advertise.Components;
+using Content.Server.Chat.Systems;
+using Content.Server.Stunnable;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Systems;
@@ -20,16 +26,30 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
     [Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
+    [Dependency] private readonly ChatSystem _chat = default!;
+    [Dependency] private readonly StunSystem _stun = default!;
+    [Dependency] private readonly SpeakOnUIClosedSystem _speak = default!;
 
     public override void Initialize()
     {
+        SubscribeLocalEvent<TipOnMeleeHitComponent, ComponentInit>(OnComponentInit);
         SubscribeLocalEvent<TipOnMeleeHitComponent, AttackedEvent>(OnAttacked);
+    }
+
+    private void OnComponentInit(EntityUid uid, TipOnMeleeHitComponent component, ComponentInit args)
+    {
+        component.CurrentChance = component.BaseChance;
     }
 
     private void OnAttacked(EntityUid uid, TipOnMeleeHitComponent component, ref AttackedEvent args)
     {
-        if (!_random.Prob(component.Chance))
+        if (!_random.Prob(component.CurrentChance))
+        {
+            component.CurrentChance = MathF.Min(1f, component.CurrentChance + component.Increment);
             return;
+        }
+
+        component.CurrentChance = component.BaseChance;
 
         if (!TryComp(uid, out TransformComponent xform) || !xform.Anchored || xform.GridUid is not {} gridUid)
             return;
@@ -68,6 +88,9 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
         _transform.SetWorldRotation(uid, angle + Angle.FromDegrees(90));
         _transform.AnchorEntity(uid, xform);
 
+        if (TryComp<SpeakOnUIClosedComponent>(uid, out var speak))
+            _speak.TrySpeak((uid, speak));
+
         var bounds = _lookup.GetWorldAABB(uid);
         foreach (var body in _physics.GetCollidingEntities(xform.MapID, bounds))
         {
@@ -76,6 +99,12 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
 
             var blunt = _prototype.Index<DamageTypePrototype>("Blunt");
             _damageable.TryChangeDamage(body.Owner, new DamageSpecifier(blunt, 100), origin: uid);
+
+            if (TryComp<MindContainerComponent>(body.Owner, out var mind) && mind.HasMind)
+            {
+                _chat.TryEmoteWithChat(body.Owner, "Scream");
+                _stun.TryKnockdown(body.Owner, TimeSpan.FromSeconds(5), true);
+            }
         }
     }
 }
