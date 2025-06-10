@@ -12,16 +12,15 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly AnchorableSystem _anchorable = default!;
-    [Dependency] private readonly TurfSystem _turf = default!;
 
     public override void Initialize()
     {
-        SubscribeLocalEvent<TipOnMeleeHitComponent, MeleeHitEvent>(OnMeleeHit);
+        SubscribeLocalEvent<TipOnMeleeHitComponent, AttackedEvent>(OnAttacked);
     }
 
-    private void OnMeleeHit(EntityUid uid, TipOnMeleeHitComponent component, ref MeleeHitEvent args)
+    private void OnAttacked(EntityUid uid, TipOnMeleeHitComponent component, ref AttackedEvent args)
     {
-        if (!args.IsHit || !_random.Prob(component.Chance))
+        if (!_random.Prob(component.Chance))
             return;
 
         if (!TryComp(uid, out TransformComponent xform) || !xform.Anchored || xform.GridUid is not {} gridUid)
@@ -32,7 +31,7 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
 
         var userPos = _transform.GetMapCoordinates(args.User).Position;
         var hitPos = _transform.GetMapCoordinates(uid).Position;
-        var dir = args.Direction ?? (hitPos - userPos);
+        var dir = hitPos - userPos;
         if (dir == Vector2.Zero)
             return;
 
