@@ -4,8 +4,10 @@ using Content.Shared.CCVar;
 using Content.Shared.Chat;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Traits.Assorted.Components;
-using System.Linq;
+using System.Collections.Generic;
+using Robust.Shared.Collections;
 using Robust.Shared.Configuration;
+using Robust.Shared.Player;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
 
@@ -18,6 +20,8 @@ public sealed class ChattyChairSystem : EntitySystem
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
+
+    private readonly HashSet<Entity<MobStateComponent>> _nearby = new();
 
     public override void Initialize()
     {
@@ -46,15 +50,10 @@ public sealed class ChattyChairSystem : EntitySystem
                 continue;
 
             // Check for any nearby mobs
-            bool found = false;
-            foreach (var ent in _lookup.GetEntitiesInRange(uid, 2f, LookupFlags.Approximate | LookupFlags.Dynamic))
-            {
-                if (HasComp<MobStateComponent>(ent))
-                {
-                    found = true;
-                    break;
-                }
-            }
+            _nearby.Clear();
+            var coordinates = xform.Coordinates;
+            _lookup.GetEntitiesInRange<MobStateComponent>(coordinates, 2f, _nearby, LookupFlags.Approximate | LookupFlags.Dynamic);
+            bool found = _nearby.Count > 0;
 
             if (!found || chair.Lines.Count == 0)
                 continue;
@@ -72,14 +71,17 @@ public sealed class ChattyChairSystem : EntitySystem
         if (!HasComp<ChattyChairComponent>(ev.Source))
             return;
 
-        foreach (var pair in ev.Recipients.ToList())
+        var remove = new ValueList<ICommonSession>(ev.Recipients.Count);
+        foreach (var (session, _) in ev.Recipients)
         {
-            var session = pair.Key;
             if (session.AttachedEntity is not { Valid: true } ent)
                 continue;
 
             if (!HasComp<ChairSpeakerComponent>(ent))
-                ev.Recipients.Remove(session);
+                remove.Add(session);
         }
+
+        foreach (var session in remove.Span)
+            ev.Recipients.Remove(session);
     }
 }
