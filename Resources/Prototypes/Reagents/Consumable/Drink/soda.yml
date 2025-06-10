@@ -84,6 +84,9 @@
       - !type:AdjustReagent
         reagent: Theobromine
         amount: 0.1
+      - !type:MovespeedModifier
+        walkSpeedModifier: 1.1
+        sprintSpeedModifier: 1.1
   fizziness: 0.4
 
 - type: reagent
