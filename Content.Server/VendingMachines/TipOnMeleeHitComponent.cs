@@ -21,4 +21,9 @@ public sealed partial class TipOnMeleeHitComponent : Component
     /// </summary>
     [ViewVariables]
     public float CurrentChance;
+
+    /// <summary>
+    /// Chance for the machine to spit out a random item when it falls.
+    /// </summary>
+    [DataField("spillChance")] public float SpillChance = 0.5f;
 }

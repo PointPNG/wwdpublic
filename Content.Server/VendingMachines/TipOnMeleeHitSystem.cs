@@ -11,6 +11,7 @@ using Content.Server.Advertise;
 using Content.Server.Advertise.Components;
 using Content.Server.Chat.Systems;
 using Content.Server.Stunnable;
+using Content.Shared.Weapons.Melee;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Systems;
@@ -29,6 +30,8 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
     [Dependency] private readonly ChatSystem _chat = default!;
     [Dependency] private readonly StunSystem _stun = default!;
     [Dependency] private readonly SpeakOnUIClosedSystem _speak = default!;
+    [Dependency] private readonly SharedMapSystem _maps = default!;
+    [Dependency] private readonly VendingMachineSystem _vending = default!;
 
     public override void Initialize()
     {
@@ -43,6 +46,9 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
 
     private void OnAttacked(EntityUid uid, TipOnMeleeHitComponent component, ref AttackedEvent args)
     {
+        if (!HasComp<MeleeWeaponComponent>(args.Used))
+            return;
+
         if (!_random.Prob(component.CurrentChance))
         {
             component.CurrentChance = MathF.Min(1f, component.CurrentChance + component.Increment);
@@ -55,6 +61,9 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
             return;
 
         if (!TryComp(gridUid, out MapGridComponent grid))
+            return;
+
+        if (!TryComp(uid, out PhysicsComponent? physics))
             return;
 
         var indices = grid.TileIndicesFor(xform.Coordinates);
@@ -71,7 +80,8 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
         foreach (var off in offsets)
         {
             var tile = indices + off;
-            if (_anchorable.TileFree(grid, tile))
+            var coordsCheck = _maps.GridTileToLocal(gridUid, grid, tile);
+            if (_anchorable.TileFree(coordsCheck, physics))
                 candidates.Add(off);
         }
 
@@ -88,22 +98,25 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
         _transform.SetWorldRotation(uid, angle + Angle.FromDegrees(90));
         _transform.AnchorEntity(uid, xform);
 
+        if (_random.Prob(component.SpillChance) && TryComp(uid, out VendingMachineComponent? vend))
+            _vending.EjectRandom(uid, true, true, vend);
+
         if (TryComp<SpeakOnUIClosedComponent>(uid, out var speak))
             _speak.TrySpeak((uid, speak));
 
         var bounds = _lookup.GetWorldAABB(uid);
-        foreach (var body in _physics.GetCollidingEntities(xform.MapID, bounds))
+        foreach (var other in _physics.GetCollidingEntities(xform.MapID, bounds))
         {
-            if (body.BodyType == BodyType.Static || body.Owner == uid || !body.Hard)
+            if (other.BodyType == BodyType.Static || other.Owner == uid || !other.Hard)
                 continue;
 
             var blunt = _prototype.Index<DamageTypePrototype>("Blunt");
-            _damageable.TryChangeDamage(body.Owner, new DamageSpecifier(blunt, 100), origin: uid);
+            _damageable.TryChangeDamage(other.Owner, new DamageSpecifier(blunt, 100), origin: uid);
 
-            if (TryComp<MindContainerComponent>(body.Owner, out var mind) && mind.HasMind)
+            if (TryComp<MindContainerComponent>(other.Owner, out var mind) && mind.HasMind)
             {
-                _chat.TryEmoteWithChat(body.Owner, "Scream");
-                _stun.TryKnockdown(body.Owner, TimeSpan.FromSeconds(5), true);
+                _chat.TryEmoteWithChat(other.Owner, "Scream");
+                _stun.TryKnockdown(other.Owner, TimeSpan.FromSeconds(5), true);
             }
         }
     }
