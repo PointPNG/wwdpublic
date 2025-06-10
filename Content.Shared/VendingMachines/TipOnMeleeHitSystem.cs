@@ -5,7 +5,7 @@ using Content.Shared.VendingMachines;
 using Content.Shared.Weapons.Melee.Events;
 using Robust.Shared.Physics;
 
-namespace Content.Server.VendingMachines;
+namespace Content.Shared.VendingMachines;
 
 public sealed class TipOnMeleeHitSystem : EntitySystem
 {
