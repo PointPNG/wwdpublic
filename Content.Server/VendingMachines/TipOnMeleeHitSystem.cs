@@ -1,11 +1,10 @@
 using System.Numerics;
 using Content.Shared.Construction.EntitySystems;
 using Content.Shared.Maps;
-using Content.Shared.VendingMachines;
 using Content.Shared.Weapons.Melee.Events;
 using Robust.Shared.Physics;
 
-namespace Content.Shared.VendingMachines;
+namespace Content.Server.VendingMachines;
 
 public sealed class TipOnMeleeHitSystem : EntitySystem
 {

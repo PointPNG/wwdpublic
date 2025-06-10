@@ -1,12 +1,9 @@
-using Robust.Shared.GameStates;
-
-namespace Content.Shared.VendingMachines;
+namespace Content.Server.VendingMachines;
 
 /// <summary>
 /// Added to vending machines that can tip over when struck in melee.
 /// </summary>
-[RegisterComponent, NetworkedComponent]
-[Access(typeof(TipOnMeleeHitSystem))]
+[RegisterComponent]
 public sealed partial class TipOnMeleeHitComponent : Component
 {
     /// <summary>
