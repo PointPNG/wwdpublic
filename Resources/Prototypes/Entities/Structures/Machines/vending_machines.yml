@@ -1329,6 +1329,8 @@
   - type: SpeakOnUIClosed
     pack: GenericVendGoodbyes
   - type: Speech
+  - type: TipOnMeleeHit
+    chance: 0.25
   - type: Sprite
     noRot: true
     sprite: Structures/Machines/VendingMachines/vendomat.rsi
