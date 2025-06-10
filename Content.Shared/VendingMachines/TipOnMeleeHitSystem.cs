@@ -46,9 +46,6 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
         _transform.Unanchor(uid, xform);
         _transform.SetCoordinates(uid, coords);
 
-        if (TryComp<SpriteComponent>(uid, out var sprite))
-            sprite.NoRotation = false;
-
         _transform.SetWorldRotation(uid, angle + Angle.FromDegrees(90));
     }
 }

@@ -1332,7 +1332,7 @@
   - type: TipOnMeleeHit
     chance: 0.25
   - type: Sprite
-    noRot: true
+    noRot: false
     sprite: Structures/Machines/VendingMachines/vendomat.rsi
     layers:
     - state: "off"
