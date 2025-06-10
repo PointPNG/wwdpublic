@@ -7,6 +7,7 @@ using Content.Shared.Damage.Prototypes;
 using Content.Shared.Maps;
 using Content.Shared.Weapons.Melee.Events;
 using Content.Shared.Mind.Components;
+using Content.Server.Body.Components;
 using Content.Server.Advertise;
 using Content.Server.Advertise.Components;
 using Content.Server.Chat.Systems;
@@ -15,6 +16,7 @@ using Content.Shared.Weapons.Melee;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Systems;
+using Robust.Shared.Audio;
 
 namespace Content.Server.VendingMachines;
 
@@ -37,6 +39,7 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
     {
         SubscribeLocalEvent<TipOnMeleeHitComponent, ComponentInit>(OnComponentInit);
         SubscribeLocalEvent<TipOnMeleeHitComponent, AttackedEvent>(OnAttacked);
+        SubscribeLocalEvent<TipOnMeleeHitComponent, AnchorStateChangedEvent>(OnAnchorChanged);
     }
 
     private void OnComponentInit(EntityUid uid, TipOnMeleeHitComponent component, ComponentInit args)
@@ -44,9 +47,18 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
         component.CurrentChance = component.BaseChance;
     }
 
+    private void OnAnchorChanged(EntityUid uid, TipOnMeleeHitComponent component, ref AnchorStateChangedEvent args)
+    {
+        if (!args.Anchored)
+        {
+            component.HasFallen = false;
+            component.CurrentChance = component.BaseChance;
+        }
+    }
+
     private void OnAttacked(EntityUid uid, TipOnMeleeHitComponent component, ref AttackedEvent args)
     {
-        if (!HasComp<MeleeWeaponComponent>(args.Used))
+        if (!HasComp<MeleeWeaponComponent>(args.Used) || component.HasFallen)
             return;
 
         if (!_random.Prob(component.CurrentChance))
@@ -55,7 +67,9 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
             return;
         }
 
+        var damageAmount = 100f * (component.CurrentChance / component.BaseChance);
         component.CurrentChance = component.BaseChance;
+        component.HasFallen = true;
 
         if (!TryComp(uid, out TransformComponent xform) || !xform.Anchored || xform.GridUid is not {} gridUid)
             return;
@@ -97,6 +111,7 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
         _transform.SetCoordinates(uid, coords);
         _transform.SetWorldRotation(uid, angle + Angle.FromDegrees(90));
         _transform.AnchorEntity(uid, xform);
+        Audio.PlayPvs(component.FallSound, uid);
 
         if (_random.Prob(component.SpillChance) && TryComp(uid, out VendingMachineComponent? vend))
             _vending.EjectRandom(uid, true, true, vend);
@@ -111,7 +126,13 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
                 continue;
 
             var blunt = _prototype.Index<DamageTypePrototype>("Blunt");
-            _damageable.TryChangeDamage(other.Owner, new DamageSpecifier(blunt, 100), origin: uid);
+            _damageable.TryChangeDamage(other.Owner, new DamageSpecifier(blunt, damageAmount), origin: uid);
+
+            if (_random.Prob(0.01f))
+            {
+                var gibEv = new BeingGibbedEvent(new HashSet<EntityUid> { other.Owner });
+                RaiseLocalEvent(other.Owner, ref gibEv);
+            }
 
             if (TryComp<MindContainerComponent>(other.Owner, out var mind) && mind.HasMind)
             {
