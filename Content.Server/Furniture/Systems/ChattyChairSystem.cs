@@ -67,7 +67,7 @@ public sealed class ChattyChairSystem : EntitySystem
         }
     }
 
-    private void OnExpandRecipients(ref ExpandICChatRecipientsEvent ev)
+    private void OnExpandRecipients(ExpandICChatRecipientsEvent ev)
     {
         if (!HasComp<ChattyChairComponent>(ev.Source))
             return;
