@@ -45,7 +45,7 @@ public sealed class TipOnMeleeHitSystem : EntitySystem
         var coords = grid.GridTileToLocal(indices);
         _transform.Unanchor(uid, xform);
         _transform.SetCoordinates(uid, coords);
-
         _transform.SetWorldRotation(uid, angle + Angle.FromDegrees(90));
+        _transform.AnchorEntity(uid, xform);
     }
 }
