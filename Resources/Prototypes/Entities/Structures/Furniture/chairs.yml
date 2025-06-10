@@ -52,6 +52,13 @@
           collection: MetalBreak
   - type: StaticPrice
     price: 25
+  - type: ChattyChair
+    lines:
+      - chair-quote-1
+      - chair-quote-2
+      - chair-quote-3
+      - chair-quote-4
+      - chair-quote-5
   - type: RequireProjectileTarget
 
 #Starts unanchored, cannot be rotated while anchored
