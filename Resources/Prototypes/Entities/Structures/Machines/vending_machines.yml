@@ -1329,8 +1329,12 @@
   - type: SpeakOnUIClosed
     pack: GenericVendGoodbyes
   - type: Speech
+  - type: TipOnMeleeHit
+    baseChance: 0.05
+    increment: 0.05
+    spillChance: 0.5
   - type: Sprite
-    noRot: true
+    noRot: false
     sprite: Structures/Machines/VendingMachines/vendomat.rsi
     layers:
     - state: "off"
