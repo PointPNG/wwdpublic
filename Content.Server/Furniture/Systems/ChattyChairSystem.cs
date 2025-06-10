@@ -3,6 +3,8 @@ using Content.Server.Furniture.Components;
 using Content.Shared.CCVar;
 using Content.Shared.Chat;
 using Content.Shared.Mobs.Components;
+using Content.Shared.Traits.Assorted.Components;
+using System.Linq;
 using Robust.Shared.Configuration;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
@@ -21,6 +23,7 @@ public sealed class ChattyChairSystem : EntitySystem
     {
         base.Initialize();
         SubscribeLocalEvent<ChattyChairComponent, ComponentStartup>(OnStartup);
+        SubscribeLocalEvent<ExpandICChatRecipientsEvent>(OnExpandRecipients);
     }
 
     private void OnStartup(Entity<ChattyChairComponent> ent, ref ComponentStartup args)
@@ -61,6 +64,22 @@ public sealed class ChattyChairSystem : EntitySystem
 
             var line = Loc.GetString(_random.Pick(chair.Lines));
             _chat.TrySendInGameICMessage(uid, line, InGameICChatType.Speak, hideChat: true, ignoreActionBlocker: true);
+        }
+    }
+
+    private void OnExpandRecipients(ref ExpandICChatRecipientsEvent ev)
+    {
+        if (!HasComp<ChattyChairComponent>(ev.Source))
+            return;
+
+        foreach (var pair in ev.Recipients.ToList())
+        {
+            var session = pair.Key;
+            if (session.AttachedEntity is not { Valid: true } ent)
+                continue;
+
+            if (!HasComp<ChairSpeakerComponent>(ent))
+                ev.Recipients.Remove(session);
         }
     }
 }

@@ -32,3 +32,13 @@
       - type: DeleteOnTrigger
       - type: SpawnOnTrigger
         proto: giber
+
+- type: trait
+  id: ChairSpeaker
+  category: Mental
+  points: 0
+  functions:
+  - !type:TraitAddComponent
+    components:
+      - type: ChairSpeaker
+
