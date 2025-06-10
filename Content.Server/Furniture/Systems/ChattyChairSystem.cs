@@ -60,7 +60,7 @@ public sealed class ChattyChairSystem : EntitySystem
             chair.NextTime = _random.NextFloat(chair.MinInterval, chair.MaxInterval);
 
             var line = Loc.GetString(_random.Pick(chair.Lines));
-            _chat.TrySendInGameICMessage(uid, line, InGameICChatType.Speak, hideChat: true);
+            _chat.TrySendInGameICMessage(uid, line, InGameICChatType.Speak, hideChat: true, ignoreActionBlocker: true);
         }
     }
 }
