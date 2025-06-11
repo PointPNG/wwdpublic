@@ -1,0 +1,11 @@
+- type: entity
+  id: TransportCartKey
+  parent: BaseTransportKey
+  name: cart keys
+  description: Keys for a simple cart.
+  components:
+  - type: Sprite
+    sprite: Objects/Vehicles/atv.rsi
+    state: keys
+  - type: TransportKey
+    transportId: cart

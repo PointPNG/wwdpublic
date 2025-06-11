@@ -1,0 +1,71 @@
+- type: entity
+  id: BaseTransport
+  abstract: true
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Transport
+    maxPassengers: 2
+    maxItemSlots: 0
+    requireKey: true
+  - type: Sprite
+    sprite: Objects/Vehicles/atv.rsi
+    state: vehicle
+    noRot: true
+  - type: AmbientSound
+    sound: /Audio/Effects/Vehicle/vehicleengineidle.ogg
+    range: 8
+    volume: -6
+    enabled: false
+  - type: InputMover
+  - type: Physics
+    bodyType: Dynamic
+  - type: Fixtures
+    fixtures:
+      base:
+        shape:
+          !type:PhysShapeCircle
+          radius: 0.45
+        density: 100
+        mask:
+        - MobMask
+        layer:
+        - MobLayer
+        hard: true
+  - type: MovementSpeedModifier
+    acceleration: 8
+    friction: 5
+    baseSprintSpeed: 6
+    baseWalkSpeed: 4.5
+  - type: Pullable
+  - type: Clickable
+  - type: InteractionOutline
+  - type: ItemSlots
+    slots:
+      key_slot:
+        name: vehicle-slot-component-slot-name-keys
+        whitelist:
+          requireAll: true
+          tags:
+          - TransportKey
+        insertSound:
+          path: /Audio/Effects/Vehicle/vehiclestartup.ogg
+          params:
+            volume: -3
+  - type: Strap
+    id: driverSeat
+    position: Stand
+    size: 200
+    buckleOffset: "-0.15,0"
+  - type: Strap
+    id: passengerSeat
+    position: Stand
+    size: 200
+    buckleOffset: "0.15,0"
+- type: entity
+  id: TransportCart
+  parent: BaseTransport
+  name: cart
+  description: A simple transport.
+  components:
+  - type: Transport
+    keyId: cart

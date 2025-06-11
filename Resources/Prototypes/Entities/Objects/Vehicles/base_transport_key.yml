@@ -1,0 +1,15 @@
+- type: entity
+  id: BaseTransportKey
+  parent: BaseItem
+  abstract: true
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Item
+    size: Tiny
+  - type: Tag
+    tags:
+    - TransportKey
+  - type: Sprite
+    sprite: Objects/Vehicles/atv.rsi
+    state: keys
+  - type: TransportKey
