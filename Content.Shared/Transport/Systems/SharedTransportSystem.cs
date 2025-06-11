@@ -2,6 +2,9 @@ using Content.Shared.Buckle;
 using Content.Shared.Buckle.Components;
 using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
+using Content.Shared.Audio;
+using Content.Shared.Movement.Systems;
+using Content.Shared.Movement.Components;
 
 namespace Content.Shared.Transport;
 
@@ -12,12 +15,16 @@ public abstract class SharedTransportSystem : EntitySystem
 {
     [Dependency] private readonly SharedContainerSystem _containers = default!;
     [Dependency] private readonly SharedBuckleSystem _buckle = default!;
+    [Dependency] private readonly SharedMoverController _mover = default!;
+    [Dependency] private readonly SharedAmbientSoundSystem _ambientSound = default!;
 
     public override void Initialize()
     {
         SubscribeLocalEvent<TransportComponent, ComponentStartup>(OnStartup);
         SubscribeLocalEvent<TransportComponent, StrappedEvent>(OnStrapped);
         SubscribeLocalEvent<TransportComponent, UnstrappedEvent>(OnUnstrapped);
+        SubscribeLocalEvent<TransportComponent, EntInsertedIntoContainerMessage>(OnContainerModified);
+        SubscribeLocalEvent<TransportComponent, EntRemovedFromContainerMessage>(OnContainerModified);
     }
 
     private void OnStartup(EntityUid uid, TransportComponent component, ComponentStartup args)
@@ -39,6 +46,13 @@ public abstract class SharedTransportSystem : EntitySystem
         }
 
         _containers.Insert(args.Buckle.Owner, component.PassengerContainer);
+
+        if (args.Strap.ID == component.DriverStrapId && component.Driver == null)
+        {
+            component.Driver = args.Buckle.Owner;
+            if (HasValidKey(uid, component))
+                _mover.SetRelay(args.Buckle.Owner, uid);
+        }
     }
 
     private void OnUnstrapped(EntityUid uid, TransportComponent component, ref UnstrappedEvent args)
@@ -47,6 +61,35 @@ public abstract class SharedTransportSystem : EntitySystem
             return;
 
         _containers.Remove(args.Buckle.Owner, component.PassengerContainer);
+
+        if (component.Driver == args.Buckle.Owner)
+        {
+            RemComp<RelayInputMoverComponent>(component.Driver.Value);
+            component.Driver = null;
+        }
+    }
+
+    private void OnContainerModified(EntityUid uid, TransportComponent component, ContainerModifiedMessage args)
+    {
+        if (args.Container.ID != component.KeyContainerId)
+            return;
+
+        if (component.KeyContainer.ContainedEntity != null)
+        {
+            component.EngineOn = true;
+            _ambientSound.SetAmbience(uid, true);
+
+            if (component.Driver != null)
+                _mover.SetRelay(component.Driver.Value, uid);
+        }
+        else
+        {
+            component.EngineOn = false;
+            _ambientSound.SetAmbience(uid, false);
+
+            if (component.Driver != null)
+                RemComp<RelayInputMoverComponent>(component.Driver.Value);
+        }
     }
 
     /// <summary>

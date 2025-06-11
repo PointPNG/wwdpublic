@@ -11,6 +11,31 @@
     sprite: Objects/Vehicles/atv.rsi
     state: vehicle
     noRot: true
+  - type: AmbientSound
+    sound: /Audio/Effects/Vehicle/vehicleengineidle.ogg
+    range: 8
+    volume: -6
+    enabled: false
+  - type: InputMover
+  - type: Physics
+    bodyType: Dynamic
+  - type: Fixtures
+    fixtures:
+      base:
+        shape:
+          !type:PhysShapeCircle
+          radius: 0.45
+        density: 100
+        mask:
+        - MobMask
+        layer:
+        - MobLayer
+        hard: true
+  - type: MovementSpeedModifier
+    acceleration: 8
+    friction: 5
+    baseSprintSpeed: 6
+    baseWalkSpeed: 4.5
   - type: Pullable
   - type: Clickable
   - type: InteractionOutline

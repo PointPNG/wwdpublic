@@ -50,4 +50,22 @@ public sealed partial class TransportComponent : Component
 
     [DataField]
     public string KeyContainerId = "key_slot";
+
+    /// <summary>
+    /// Identifier of the strap that represents the driver seat.
+    /// </summary>
+    [DataField]
+    public string DriverStrapId = "driverSeat";
+
+    /// <summary>
+    /// The entity currently driving the transport.
+    /// </summary>
+    [ViewVariables]
+    public EntityUid? Driver;
+
+    /// <summary>
+    /// Whether the engine is currently running.
+    /// </summary>
+    [ViewVariables]
+    public bool EngineOn;
 }
