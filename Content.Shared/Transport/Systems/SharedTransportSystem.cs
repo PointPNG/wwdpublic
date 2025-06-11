@@ -5,6 +5,10 @@ using Robust.Shared.GameStates;
 using Content.Shared.Audio;
 using Content.Shared.Movement.Systems;
 using Content.Shared.Movement.Components;
+using Content.Shared.Hands.Components;
+using Content.Shared.Hands.EntitySystems;
+using Content.Shared.Inventory.VirtualItem;
+using Content.Shared.Interaction.Components;
 
 namespace Content.Shared.Transport;
 
@@ -17,6 +21,8 @@ public abstract class SharedTransportSystem : EntitySystem
     [Dependency] private readonly SharedBuckleSystem _buckle = default!;
     [Dependency] private readonly SharedMoverController _mover = default!;
     [Dependency] private readonly SharedAmbientSoundSystem _ambientSound = default!;
+    [Dependency] private readonly SharedHandsSystem _hands = default!;
+    [Dependency] private readonly SharedVirtualItemSystem _virtualItem = default!;
 
     public override void Initialize()
     {
@@ -50,7 +56,11 @@ public abstract class SharedTransportSystem : EntitySystem
         if (component.Driver == null)
         {
             component.Driver = args.Buckle.Owner;
-            if (HasValidKey(uid, component))
+
+            if (component.EngineOn && component.NeedsHands)
+                BlockHands(uid, component, args.Buckle.Owner);
+
+            if (component.EngineOn && HasValidKey(uid, component))
                 _mover.SetRelay(args.Buckle.Owner, uid);
         }
     }
@@ -64,6 +74,9 @@ public abstract class SharedTransportSystem : EntitySystem
 
         if (component.Driver == args.Buckle.Owner)
         {
+            if (component.NeedsHands)
+                FreeHands(args.Buckle.Owner, component);
+
             RemComp<RelayInputMoverComponent>(component.Driver.Value);
             component.Driver = null;
         }
@@ -80,7 +93,12 @@ public abstract class SharedTransportSystem : EntitySystem
             _ambientSound.SetAmbience(uid, true);
 
             if (component.Driver != null)
+            {
+                if (component.NeedsHands)
+                    BlockHands(uid, component, component.Driver.Value);
+
                 _mover.SetRelay(component.Driver.Value, uid);
+            }
         }
         else
         {
@@ -88,7 +106,12 @@ public abstract class SharedTransportSystem : EntitySystem
             _ambientSound.SetAmbience(uid, false);
 
             if (component.Driver != null)
+            {
+                if (component.NeedsHands)
+                    FreeHands(component.Driver.Value, component);
+
                 RemComp<RelayInputMoverComponent>(component.Driver.Value);
+            }
         }
     }
 
@@ -121,5 +144,54 @@ public abstract class SharedTransportSystem : EntitySystem
             return !comp.RequireKey;
 
         return IsKeyValid(transport, key.Value, comp);
+    }
+
+    private void BlockHands(EntityUid transport, TransportComponent comp, EntityUid driver)
+    {
+        if (!TryComp(driver, out HandsComponent? hands))
+            return;
+
+        var freeHands = 0;
+        foreach (var hand in _hands.EnumerateHands(driver, hands))
+        {
+            if (hand.HeldEntity == null)
+            {
+                freeHands++;
+                continue;
+            }
+
+            if (HasComp<UnremoveableComponent>(hand.HeldEntity) && hand.HeldEntity != driver)
+                continue;
+
+            _hands.DoDrop(driver, hand, true, hands);
+            freeHands++;
+            if (freeHands == 2)
+                break;
+        }
+
+        if (_virtualItem.TrySpawnVirtualItemInHand(transport, driver, out var item1, true))
+        {
+            EnsureComp<UnremoveableComponent>(item1.Value);
+            comp.HandVirtualItems.Add(item1.Value);
+        }
+
+        if (_virtualItem.TrySpawnVirtualItemInHand(transport, driver, out var item2, true))
+        {
+            EnsureComp<UnremoveableComponent>(item2.Value);
+            comp.HandVirtualItems.Add(item2.Value);
+        }
+    }
+
+    private void FreeHands(EntityUid driver, TransportComponent comp)
+    {
+        foreach (var item in comp.HandVirtualItems)
+        {
+            if (!TryComp(item, out VirtualItemComponent? virt))
+                continue;
+
+            _virtualItem.DeleteVirtualItem((item, virt), driver);
+        }
+
+        comp.HandVirtualItems.Clear();
     }
 }

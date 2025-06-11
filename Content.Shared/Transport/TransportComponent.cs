@@ -66,6 +66,18 @@ public sealed partial class TransportComponent : Component
     public bool EngineOn;
 
     /// <summary>
+    ///     Whether the driver must have free hands while operating.
+    /// </summary>
+    [DataField]
+    public bool NeedsHands = true;
+
+    /// <summary>
+    ///     Virtual items occupying the driver's hands while driving.
+    /// </summary>
+    [ViewVariables]
+    public List<EntityUid> HandVirtualItems = new();
+
+    /// <summary>
     /// Current number of passengers buckled into the transport.
     /// </summary>
     [ViewVariables]
