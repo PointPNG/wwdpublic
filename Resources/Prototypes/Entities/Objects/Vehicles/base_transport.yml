@@ -4,10 +4,16 @@
   categories: [ HideSpawnMenu ]
   components:
   - type: Transport
-    maxPassengers: 1
+    maxPassengers: 2
     maxItemSlots: 0
     requireKey: true
   - type: Sprite
     sprite: Objects/Vehicles/atv.rsi
     state: vehicle
     noRot: true
+  - type: Strap
+    position: Stand
+    buckleOffset: "0,0.15"
+  - type: Strap
+    position: Stand
+    buckleOffset: "0,-0.15"
