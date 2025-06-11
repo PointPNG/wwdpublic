@@ -4,7 +4,7 @@
   categories: [ HideSpawnMenu ]
   components:
   - type: Transport
-    maxPassengers: 1
+    maxPassengers: 2
     maxItemSlots: 0
     requireKey: true
   - type: Sprite
@@ -55,6 +55,12 @@
     id: driverSeat
     position: Stand
     size: 100
+    buckleOffset: "-0.15,0"
+  - type: Strap
+    id: passengerSeat
+    position: Stand
+    size: 100
+    buckleOffset: "0.15,0"
 - type: entity
   id: TransportCart
   parent: BaseTransport

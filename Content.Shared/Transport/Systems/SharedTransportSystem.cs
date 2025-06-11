@@ -47,7 +47,7 @@ public abstract class SharedTransportSystem : EntitySystem
 
         _containers.Insert(args.Buckle.Owner, component.PassengerContainer);
 
-        if (args.Strap.ID == component.DriverStrapId && component.Driver == null)
+        if (component.Driver == null)
         {
             component.Driver = args.Buckle.Owner;
             if (HasValidKey(uid, component))
