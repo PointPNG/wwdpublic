@@ -60,7 +60,7 @@ public abstract class SharedTransportSystem : EntitySystem
             if (component.EngineOn && component.NeedsHands)
                 BlockHands(uid, component, args.Buckle.Owner);
 
-            if (component.EngineOn && HasValidKey(uid, component))
+            if (HasValidKey(uid, component))
                 _mover.SetRelay(args.Buckle.Owner, uid);
         }
     }
