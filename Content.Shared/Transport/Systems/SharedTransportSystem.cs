@@ -39,7 +39,7 @@ public abstract class SharedTransportSystem : EntitySystem
             return;
         }
 
-        component.PassengerContainer.Insert(args.Buckle.Owner);
+        _containers.Insert(args.Buckle.Owner, component.PassengerContainer);
         UpdateSeatPositions(uid, component);
     }
 
@@ -48,7 +48,7 @@ public abstract class SharedTransportSystem : EntitySystem
         if (args.Strap.Owner != uid)
             return;
 
-        component.PassengerContainer.Remove(args.Buckle.Owner);
+        _containers.Remove(args.Buckle.Owner, component.PassengerContainer);
         UpdateSeatPositions(uid, component);
     }
 
