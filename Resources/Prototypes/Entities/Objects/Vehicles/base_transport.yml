@@ -12,9 +12,11 @@
     state: vehicle
     noRot: true
   - type: Strap
+    id: driverSeat
     position: Stand
     buckleOffset: "0,0.15"
   - type: Strap
+    id: passengerSeat
     position: Stand
     buckleOffset: "0,-0.15"
 - type: entity
