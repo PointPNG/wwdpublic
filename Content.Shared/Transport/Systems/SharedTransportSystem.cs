@@ -1,3 +1,6 @@
+using System.Numerics;
+using Content.Shared.Buckle;
+using Content.Shared.Buckle.Components;
 using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
 
@@ -9,10 +12,13 @@ namespace Content.Shared.Transport;
 public abstract class SharedTransportSystem : EntitySystem
 {
     [Dependency] private readonly SharedContainerSystem _containers = default!;
+    [Dependency] private readonly SharedBuckleSystem _buckle = default!;
 
     public override void Initialize()
     {
         SubscribeLocalEvent<TransportComponent, ComponentStartup>(OnStartup);
+        SubscribeLocalEvent<TransportComponent, StrappedEvent>(OnStrapped);
+        SubscribeLocalEvent<TransportComponent, UnstrappedEvent>(OnUnstrapped);
     }
 
     private void OnStartup(EntityUid uid, TransportComponent component, ComponentStartup args)
@@ -20,6 +26,41 @@ public abstract class SharedTransportSystem : EntitySystem
         component.PassengerContainer = _containers.EnsureContainer<Container>(uid, component.PassengerContainerId);
         component.ItemContainer = _containers.EnsureContainer<Container>(uid, component.ItemContainerId);
         component.KeyContainer = _containers.EnsureContainer<ContainerSlot>(uid, component.KeyContainerId);
+    }
+
+    private void OnStrapped(EntityUid uid, TransportComponent component, ref StrappedEvent args)
+    {
+        if (args.Strap.Owner != uid)
+            return;
+
+        if (component.PassengerContainer.ContainedEntities.Count >= component.MaxPassengers)
+        {
+            _buckle.TryUnbuckle(args.Buckle.Owner, args.Buckle.Owner);
+            return;
+        }
+
+        component.PassengerContainer.Insert(args.Buckle.Owner);
+        UpdateSeatPositions(uid, component);
+    }
+
+    private void OnUnstrapped(EntityUid uid, TransportComponent component, ref UnstrappedEvent args)
+    {
+        if (args.Strap.Owner != uid)
+            return;
+
+        component.PassengerContainer.Remove(args.Buckle.Owner);
+        UpdateSeatPositions(uid, component);
+    }
+
+    private void UpdateSeatPositions(EntityUid uid, TransportComponent component)
+    {
+        var i = 0;
+        foreach (var passenger in component.PassengerContainer.ContainedEntities)
+        {
+            var offset = i < component.SeatOffsets.Count ? component.SeatOffsets[i] : Vector2.Zero;
+            Transform(passenger).LocalPosition = offset;
+            i++;
+        }
     }
 
     /// <summary>

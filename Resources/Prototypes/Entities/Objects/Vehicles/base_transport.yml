@@ -7,18 +7,17 @@
     maxPassengers: 2
     maxItemSlots: 0
     requireKey: true
+    seatOffsets:
+    - "0,0.15"
+    - "0,-0.15"
   - type: Sprite
     sprite: Objects/Vehicles/atv.rsi
     state: vehicle
     noRot: true
   - type: Strap
-    id: driverSeat
+    id: seat
     position: Stand
-    buckleOffset: "0,0.15"
-  - type: Strap
-    id: passengerSeat
-    position: Stand
-    buckleOffset: "0,-0.15"
+    size: 200
 - type: entity
   id: TransportCart
   parent: BaseTransport
