@@ -17,3 +17,8 @@
   - type: Strap
     position: Stand
     buckleOffset: "0,-0.15"
+- type: entity
+  id: TransportCart
+  parent: BaseTransport
+  name: cart
+  description: A simple two-seat transport.
