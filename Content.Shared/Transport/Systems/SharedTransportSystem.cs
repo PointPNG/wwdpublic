@@ -1,4 +1,3 @@
-using System.Numerics;
 using Content.Shared.Buckle;
 using Content.Shared.Buckle.Components;
 using Robust.Shared.Containers;
@@ -40,7 +39,6 @@ public abstract class SharedTransportSystem : EntitySystem
         }
 
         _containers.Insert(args.Buckle.Owner, component.PassengerContainer);
-        UpdateSeatPositions(uid, component);
     }
 
     private void OnUnstrapped(EntityUid uid, TransportComponent component, ref UnstrappedEvent args)
@@ -49,18 +47,6 @@ public abstract class SharedTransportSystem : EntitySystem
             return;
 
         _containers.Remove(args.Buckle.Owner, component.PassengerContainer);
-        UpdateSeatPositions(uid, component);
-    }
-
-    private void UpdateSeatPositions(EntityUid uid, TransportComponent component)
-    {
-        var i = 0;
-        foreach (var passenger in component.PassengerContainer.ContainedEntities)
-        {
-            var offset = i < component.SeatOffsets.Count ? component.SeatOffsets[i] : Vector2.Zero;
-            Transform(passenger).LocalPosition = offset;
-            i++;
-        }
     }
 
     /// <summary>

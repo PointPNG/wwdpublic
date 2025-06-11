@@ -1,4 +1,3 @@
-using System.Numerics;
 using Robust.Shared.GameStates;
 using Robust.Shared.Containers;
 
@@ -50,12 +49,5 @@ public sealed partial class TransportComponent : Component
     public string ItemContainerId = "storage";
 
     [DataField]
-    public string KeyContainerId = "key";
-
-    /// <summary>
-    /// Offsets, relative to the transport's position, for each seat.
-    /// Buckled passengers will be moved to these positions in order of seating.
-    /// </summary>
-    [DataField]
-    public List<Vector2> SeatOffsets = new();
+    public string KeyContainerId = "key_slot";
 }

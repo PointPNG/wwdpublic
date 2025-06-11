@@ -7,17 +7,35 @@
     maxPassengers: 2
     maxItemSlots: 0
     requireKey: true
-    seatOffsets:
-    - "0,0.15"
-    - "0,-0.15"
   - type: Sprite
     sprite: Objects/Vehicles/atv.rsi
     state: vehicle
     noRot: true
+  - type: Pullable
+  - type: Clickable
+  - type: InteractionOutline
+  - type: ItemSlots
+    slots:
+      key_slot:
+        name: vehicle-slot-component-slot-name-keys
+        whitelist:
+          requireAll: true
+          tags:
+          - TransportKey
+        insertSound:
+          path: /Audio/Effects/Vehicle/vehiclestartup.ogg
+          params:
+            volume: -3
   - type: Strap
-    id: seat
+    id: driverSeat
     position: Stand
-    size: 200
+    size: 100
+    buckleOffset: "0,0.15"
+  - type: Strap
+    id: passengerSeat
+    position: Stand
+    size: 100
+    buckleOffset: "0,-0.15"
 - type: entity
   id: TransportCart
   parent: BaseTransport
