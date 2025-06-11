@@ -27,6 +27,12 @@ public sealed partial class TransportComponent : Component
     [DataField]
     public bool RequireKey = true;
 
+    /// <summary>
+    /// Identifier of the key required to operate this transport.
+    /// </summary>
+    [DataField]
+    public string? KeyId;
+
     [ViewVariables]
     public Container PassengerContainer = default!;
 

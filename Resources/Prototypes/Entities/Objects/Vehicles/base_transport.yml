@@ -22,3 +22,6 @@
   parent: BaseTransport
   name: cart
   description: A simple two-seat transport.
+  components:
+  - type: Transport
+    keyId: cart
