@@ -1,0 +1,13 @@
+- type: entity
+  id: BaseTransport
+  abstract: true
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Transport
+    maxPassengers: 1
+    maxItemSlots: 0
+    requireKey: true
+  - type: Sprite
+    sprite: Objects/Vehicles/atv.rsi
+    state: vehicle
+    noRot: true
