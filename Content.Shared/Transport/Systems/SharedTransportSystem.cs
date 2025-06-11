@@ -17,7 +17,6 @@ public abstract class SharedTransportSystem : EntitySystem
     [Dependency] private readonly SharedBuckleSystem _buckle = default!;
     [Dependency] private readonly SharedMoverController _mover = default!;
     [Dependency] private readonly SharedAmbientSoundSystem _ambientSound = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
 
     public override void Initialize()
     {
@@ -30,7 +29,6 @@ public abstract class SharedTransportSystem : EntitySystem
 
     private void OnStartup(EntityUid uid, TransportComponent component, ComponentStartup args)
     {
-        component.PassengerContainer = _containers.EnsureContainer<Container>(uid, component.PassengerContainerId);
         component.ItemContainer = _containers.EnsureContainer<Container>(uid, component.ItemContainerId);
         component.KeyContainer = _containers.EnsureContainer<ContainerSlot>(uid, component.KeyContainerId);
     }
@@ -40,30 +38,24 @@ public abstract class SharedTransportSystem : EntitySystem
         if (args.Strap.Owner != uid)
             return;
 
-        if (component.PassengerContainer.ContainedEntities.Count >= component.MaxPassengers)
+        // ensure we don't exceed the passenger limit
+        var count = 0;
+        foreach (var strap in EntityQuery<StrapComponent>(uid))
+            count += strap.BuckledEntities.Count;
+
+        if (count > component.MaxPassengers)
         {
             _buckle.TryUnbuckle(args.Buckle.Owner, args.Buckle.Owner);
             return;
         }
 
-        _containers.Insert(args.Buckle.Owner, component.PassengerContainer);
+        var isDriverSeat = args.Strap.Owner == uid && args.Strap.Id == component.DriverStrapId;
 
-        var seatIndex = 0;
-        if (component.Driver == null)
+        if (isDriverSeat)
         {
             component.Driver = args.Buckle.Owner;
             if (HasValidKey(uid, component))
                 _mover.SetRelay(args.Buckle.Owner, uid);
-        }
-        else
-        {
-            seatIndex = 1;
-        }
-
-        if (seatIndex < component.SeatOffsets.Count)
-        {
-            var xform = Transform(args.Buckle.Owner);
-            xform.LocalPosition = component.SeatOffsets[seatIndex];
         }
     }
 
@@ -71,8 +63,6 @@ public abstract class SharedTransportSystem : EntitySystem
     {
         if (args.Strap.Owner != uid)
             return;
-
-        _containers.Remove(args.Buckle.Owner, component.PassengerContainer);
 
         if (component.Driver == args.Buckle.Owner)
         {
