@@ -64,4 +64,10 @@ public sealed partial class TransportComponent : Component
     /// </summary>
     [ViewVariables]
     public bool EngineOn;
+
+    /// <summary>
+    /// Current number of passengers buckled into the transport.
+    /// </summary>
+    [ViewVariables]
+    public int PassengerCount;
 }

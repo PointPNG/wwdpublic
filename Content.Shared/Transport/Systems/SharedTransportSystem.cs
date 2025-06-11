@@ -31,6 +31,7 @@ public abstract class SharedTransportSystem : EntitySystem
     {
         component.ItemContainer = _containers.EnsureContainer<Container>(uid, component.ItemContainerId);
         component.KeyContainer = _containers.EnsureContainer<ContainerSlot>(uid, component.KeyContainerId);
+        component.PassengerCount = 0;
     }
 
     private void OnStrapped(EntityUid uid, TransportComponent component, ref StrappedEvent args)
@@ -38,20 +39,15 @@ public abstract class SharedTransportSystem : EntitySystem
         if (args.Strap.Owner != uid)
             return;
 
-        // ensure we don't exceed the passenger limit
-        var count = 0;
-        foreach (var strap in EntityQuery<StrapComponent>(uid))
-            count += strap.BuckledEntities.Count;
-
-        if (count > component.MaxPassengers)
+        if (component.PassengerCount >= component.MaxPassengers)
         {
             _buckle.TryUnbuckle(args.Buckle.Owner, args.Buckle.Owner);
             return;
         }
 
-        var isDriverSeat = args.Strap.Owner == uid && args.Strap.Id == component.DriverStrapId;
+        component.PassengerCount++;
 
-        if (isDriverSeat)
+        if (component.Driver == null)
         {
             component.Driver = args.Buckle.Owner;
             if (HasValidKey(uid, component))
@@ -63,6 +59,8 @@ public abstract class SharedTransportSystem : EntitySystem
     {
         if (args.Strap.Owner != uid)
             return;
+
+        component.PassengerCount = Math.Max(0, component.PassengerCount - 1);
 
         if (component.Driver == args.Buckle.Owner)
         {
