@@ -1,5 +1,6 @@
 using Robust.Shared.GameStates;
 using Robust.Shared.Containers;
+using System.Numerics;
 
 namespace Content.Shared.Transport;
 
@@ -14,6 +15,13 @@ public sealed partial class TransportComponent : Component
     /// </summary>
     [DataField]
     public int MaxPassengers = 1;
+
+    /// <summary>
+    /// Local offsets for each seat relative to the transport's origin. The first
+    /// offset is used for the driver seat.
+    /// </summary>
+    [DataField]
+    public List<Vector2> SeatOffsets = new();
 
     /// <summary>
     /// Maximum number of items that can be stored in this transport.

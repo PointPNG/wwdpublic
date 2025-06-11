@@ -17,6 +17,7 @@ public abstract class SharedTransportSystem : EntitySystem
     [Dependency] private readonly SharedBuckleSystem _buckle = default!;
     [Dependency] private readonly SharedMoverController _mover = default!;
     [Dependency] private readonly SharedAmbientSoundSystem _ambientSound = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
 
     public override void Initialize()
     {
@@ -47,11 +48,22 @@ public abstract class SharedTransportSystem : EntitySystem
 
         _containers.Insert(args.Buckle.Owner, component.PassengerContainer);
 
+        var seatIndex = 0;
         if (component.Driver == null)
         {
             component.Driver = args.Buckle.Owner;
             if (HasValidKey(uid, component))
                 _mover.SetRelay(args.Buckle.Owner, uid);
+        }
+        else
+        {
+            seatIndex = 1;
+        }
+
+        if (seatIndex < component.SeatOffsets.Count)
+        {
+            var xform = Transform(args.Buckle.Owner);
+            xform.LocalPosition = component.SeatOffsets[seatIndex];
         }
     }
 
