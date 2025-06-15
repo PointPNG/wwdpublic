@@ -15,12 +15,10 @@ public sealed class DirectionalLightFilterSystem : SharedDirectionalLightFilterS
     [Dependency] private readonly IEntityManager _entMan = default!;
 
     private ColorTintOverlay _overlay = default!;
-    private EntityQuery<DirectionalLightFilterComponent, TransformComponent> _query;
 
     public override void Initialize()
     {
         base.Initialize();
-        _query = GetEntityQuery<DirectionalLightFilterComponent, TransformComponent>();
         _overlay = new ColorTintOverlay
         {
             TintColor = Vector3.Zero,
@@ -48,7 +46,7 @@ public sealed class DirectionalLightFilterSystem : SharedDirectionalLightFilterS
         var playerPos = _entMan.GetComponent<TransformComponent>(player.Value).WorldPosition;
         var block = 0f;
 
-        foreach (var (comp, xform) in _query)
+        foreach (var (comp, xform) in EntityManager.EntityQuery<DirectionalLightFilterComponent, TransformComponent>())
         {
             var diff = playerPos - xform.WorldPosition;
             if (diff == Vector2.Zero)
